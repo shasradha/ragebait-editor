@@ -397,7 +397,7 @@ export default function Home() {
             <select
               value={roastLang}
               onChange={(e) => setRoastLang(e.target.value)}
-              className="bg-transparent text-[11px] sm:text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
+              className="bg-transparent text-base sm:text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
             >
               <option value="english" className="bg-[#141414] text-foreground">🇺🇸 English</option>
               <option value="hinglish" className="bg-[#141414] text-foreground">🇮🇳 Hinglish</option>
@@ -415,7 +415,7 @@ export default function Home() {
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="bg-transparent text-[11px] sm:text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
+              className="bg-transparent text-base sm:text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
             >
               {LANGUAGE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} className="bg-[#141414] text-foreground">

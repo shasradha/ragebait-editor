@@ -33,7 +33,7 @@ export default function RoastBanner({ roast, score = null }: RoastBannerProps) {
   return (
     <div 
       className={`w-full transition-all duration-500 ease-in-out overflow-hidden flex-shrink-0 ${
-        show && roast ? "max-h-40 opacity-100 mb-4" : "max-h-0 opacity-0 mb-0 pointer-events-none"
+        show && roast ? "max-h-96 sm:max-h-48 opacity-100 mb-4" : "max-h-0 opacity-0 mb-0 pointer-events-none"
       }`}
     >
       <div className={`relative overflow-hidden rounded-xl border p-4 md:p-5 glass ${bannerStyle}`}>

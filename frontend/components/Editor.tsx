@@ -237,9 +237,9 @@ export default function Editor({
           onMount={handleEditorDidMount}
           options={{
             readOnly,
-            glyphMargin: true,
-            folding: true,
-            lineNumbersMinChars: 3,
+            glyphMargin: typeof window !== "undefined" ? window.innerWidth >= 640 : true,
+            folding: typeof window !== "undefined" ? window.innerWidth >= 640 : true,
+            lineNumbersMinChars: typeof window !== "undefined" && window.innerWidth < 640 ? 2 : 3,
             automaticLayout: true,
             scrollBeyondLastLine: false,
           }}

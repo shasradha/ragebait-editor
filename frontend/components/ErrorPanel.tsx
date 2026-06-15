@@ -16,7 +16,7 @@ interface ErrorPanelProps {
 export default function ErrorPanel({ errors, onSelectError, loading = false }: ErrorPanelProps) {
   if (loading) {
     return (
-      <div className="flex flex-col gap-3 h-[210px] max-h-[210px] overflow-y-auto pr-1 pb-2">
+      <div className="flex flex-col gap-3 h-full sm:h-[210px] sm:max-h-[210px] overflow-y-auto pr-1 pb-2">
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
@@ -38,7 +38,7 @@ export default function ErrorPanel({ errors, onSelectError, loading = false }: E
 
   if (!errors || errors.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[210px] text-foreground/40 font-mono text-center">
+      <div className="flex flex-col items-center justify-center h-full sm:h-[210px] text-foreground/40 font-mono text-center">
         <span className="text-4xl mb-2 animate-float">🔥</span>
         <h3 className="font-bold text-base text-foreground/60 mb-1">Code is Clean! No Cap!</h3>
         <p className="text-xs max-w-md">
@@ -49,7 +49,7 @@ export default function ErrorPanel({ errors, onSelectError, loading = false }: E
   }
 
   return (
-    <div className="flex flex-col gap-3 h-[210px] max-h-[210px] overflow-y-auto pr-1 pb-2 scroll-smooth">
+    <div className="flex flex-col gap-3 h-full sm:h-[210px] sm:max-h-[210px] overflow-y-auto pr-1 pb-2 scroll-smooth">
       {errors.map((error, idx) => {
         const isRed = error.type === "syntax" || error.type === "indent";
         

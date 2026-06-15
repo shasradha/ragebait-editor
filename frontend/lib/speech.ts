@@ -96,17 +96,49 @@ export const fetchIdleRoast = async (lang: string): Promise<string> => {
   } catch (err) {
     console.error("Failed to fetch idle roast:", err)
   }
-  // Fallback if API fails
-  const fallbacks: Record<string, string> = {
-    english: "Ayo, are you alive? Your code is still broken and waiting for you.",
-    hinglish: "Bhai zinda hai? Code abhi bhi toota hua hai idhar.",
-    banglish: "Ki re bhai, benche achis? Code ekhono bhanga pore ache.",
-    bhojpuri: "Babua kahan gailu? Code abhi bhi tootal ba idhar.",
-    marathi: "भाऊ जिवंत आहेस का? कोड अजूनही तुटलेला आहे.",
-    tamil: "தம்பி உயிரோட இருக்கியா? கோட இன்னும் உடைஞ்சி கிடக்கு.",
-    british: "Mate, you still about? Your code is still an absolute shambles.",
+  // Multiple creative fallbacks per language to prevent repetition
+  const fallbacks: Record<string, string[]> = {
+    english: [
+      "Ayo, are you alive? Your code is still broken and waiting for you.",
+      "Hello? Your code is not going to fix itself. Trust me, I tried.",
+      "Still here? Or did you go fetch some talent?",
+      "Your code is crying in the corner. Come back.",
+    ],
+    hinglish: [
+      "Bhai zinda hai? Code abhi bhi toota hua hai idhar.",
+      "Bhai kidhar gaya? Apne aap code theek nahi hone wala, maine try kiya tha.",
+      "Kya bhai, chai peene gaya kya? Code tera ro raha hai.",
+      "Bhai aaja, code dekh ke meri aankhein dukh rahi hain.",
+    ],
+    banglish: [
+      "Ki re bhai, benche achis? Code ekhono bhanga pore ache.",
+      "Ki re bhai, kothay geli? Code nijer theke thik hobe na, ami try korechi.",
+      "Bhai cha khete geli naki? Erom baje code eka rekhe jas na.",
+    ],
+    bhojpuri: [
+      "Babua kahan gailu? Code abhi bhi tootal ba idhar.",
+      "Arre bhaiya, kahan gailu? Apne se code na sudhari, hum dekh chuki bani.",
+      "Babua aaja ho, aisan code likh ke kahan bhag gailu?",
+    ],
+    marathi: [
+      "भाऊ जिवंत आहेस का? कोड अजूनही तुटलेला आहे.",
+      "अरे मित्रा, कुठे गेलायस? कोड स्वतःहून दुरुस्त होणार नाही, मी प्रयत्न करून पाहिलाय.",
+      "भाऊ, चहा प्यायला गेला का? इकडे कोड तुटलेला पडलाय.",
+    ],
+    tamil: [
+      "தம்பி உயிரோட இருக்கியா? கோட இன்னும் உடைஞ்சி கிடக்கு.",
+      "என்ன தம்பி, எங்க போய்ட்ட? கோடு தானா சரியாகாது, நான் முயற்சி பண்ணி பாத்துட்டேன்.",
+      "தம்பி, டீ குடிக்க போயிட்டியா? கோடு இங்க அழுதுகிட்டு இருக்கு.",
+    ],
+    british: [
+      "Mate, you still about? Your code is still an absolute shambles.",
+      "Hello? Are you still there, mate? Your code is not going to fix itself. Trust me, I've tried.",
+      "Gone for a cuppa, have we? Leaving this absolute bin fire behind?",
+    ],
   }
-  return fallbacks[lang] || fallbacks["english"]
+  const choices = fallbacks[lang] || fallbacks["english"]
+  const randomIndex = Math.floor(Math.random() * choices.length)
+  return choices[randomIndex]
 }
 
 export const speak = async (text: string, lang: string = "english", gender: string = "male") => {
