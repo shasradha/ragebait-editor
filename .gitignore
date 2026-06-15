@@ -1,0 +1,33 @@
+# Environment files (NEVER push API keys)
+.env
+.env.local
+.env.production
+.env*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ChromaDB local storage
+chromadb/
+
+# Node.js
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Docker
+chroma_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

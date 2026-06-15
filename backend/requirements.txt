@@ -1,0 +1,13 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+fastapi
+uvicorn[standard]
+groq
+chromadb==0.5.23
+torch==2.2.2+cpu
+sentence-transformers
+pydantic
+python-dotenv
+httpx
+numpy<2.0.0
+edge-tts
+supabase
