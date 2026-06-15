@@ -6,7 +6,6 @@ export const setMuted = (val: boolean) => { isMuted = val }
 
 const TRANSLATIONS: Record<string, Record<string, string>> = {
   english: {
-    idle: "Hello? Are you still there? Your code is not going to fix itself. Trust me, I tried.",
     same_code: "Did you... submit the same code again? Hoping it would fix itself? It did not.",
     empty_code: "There is nothing here bhai. You submitted air. Actual air.",
     click_logo: "Stop clicking me, I am not a toy, fr fr 💀",
@@ -17,7 +16,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     gender_egg: "Bhai, choose one. Do you listen to both?",
   },
   hinglish: {
-    idle: "Hello? Bhai kidhar gaya? Apne aap code theek nahi hone wala, maine try kiya tha.",
     same_code: "Bhai... firse wahi code submit kar diya? Kya laga, khud theek ho jayega? Bilkul nahi.",
     empty_code: "Kuch bhi nahi hai yahan bhai. Khali hawa submit kar di tune.",
     click_logo: "Bhai baar baar click mat kar, khilona nahi hu main fr fr 💀",
@@ -28,7 +26,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     gender_egg: "Bhai choose kar ek. Dono sunta hai kya tu?",
   },
   banglish: {
-    idle: "Ki re bhai, kothay geli? Code nijer theke thik hobe na, ami try korechi.",
     same_code: "Bhai... abar same code submit korli? Bhabli nijebete thik hoye jabe? Hobe na.",
     empty_code: "Ekhane toh kichui nei bhai. Tui toh shudhu hawa submit korechis.",
     click_logo: "Bhai bar bar click koris na, ami khelna noi fr fr 💀",
@@ -39,7 +36,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     gender_egg: "Bhai ekta choose kor. Dutoই shonish naki tui?",
   },
   bhojpuri: {
-    idle: "Arre bhaiya, kahan gailu? Apne se code na sudhari, hum dekh chuki bani.",
     same_code: "Arey babua... fir se ohi code bhej delu? Sochlu ki apne se thik ho jayi? E na hoi.",
     empty_code: "Ehaan kucho naikhe bhaiya. Pura khali hawa bhej delu tu.",
     click_logo: "Babua baar baar click mat kara, hum khilona naikhi fr fr 💀",
@@ -50,7 +46,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     gender_egg: "Bhaiya ekgo choose kara. Dono sunela ka tu?",
   },
   marathi: {
-    idle: "अरे मित्रा, कुठे गेलायस? कोड स्वतःहून दुरुस्त होणार नाही, मी प्रयत्न करून पाहिलाय.",
     same_code: "मित्रा... पुन्हा तोच कोड सबमिट केलास? वाटलं स्वतःहून ठीक होईल? अजिबात नाही.",
     empty_code: "इथे काहीच नाहीये भाऊ. तू नुसती हवा सबमिट केली आहेस.",
     click_logo: "भाऊ मला वारंवार क्लिक करू नकोस, मी खेळणं नाहीये fr fr 💀",
@@ -61,7 +56,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     gender_egg: "भाऊ एक निवड. दोन्ही ऐकतोस का तू?",
   },
   tamil: {
-    idle: "என்ன தம்பி, எங்க போய்ட்ட? கோடு தானா சரியாகாது, நான் முயற்சி பண்ணி பாத்துட்டேன்.",
     same_code: "தம்பி... மறுபடியும் அதே கோட சப்மிட் பண்றியா? அதுவே சரியாயிடும்னு நெனச்சியா? வாய்ப்பே இல்ல.",
     empty_code: "இங்க ஒண்ணume இல்ல தம்பி. வெறும் காத்தை சப்மிட் பண்ணிருக்க.",
     click_logo: "என்னை சும்மா சும்மா கிளிக் பண்ணாத, நான் ஒன்னும் பொம்மை இல்ல fr fr 💀",
@@ -72,7 +66,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     gender_egg: "தம்பி ஏதாவது ஒன்னு சூஸ் பண்ணு. ரெண்டையுமே கேப்பியா நீ?",
   },
   british: {
-    idle: "Hello? Are you still there, mate? Your code is not going to fix itself. Trust me, I've tried.",
     same_code: "Did you... submit the same code again? Hoping it would mend itself? It did not.",
     empty_code: "There is absolutely nothing here, mate. You've submitted thin air. Literal air.",
     click_logo: "Stop clicking me, I am not a toy, bloody hell 💀",
@@ -87,6 +80,33 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
 export const getTranslatedText = (key: string, lang: string): string => {
   const langKey = TRANSLATIONS[lang] ? lang : "english"
   return TRANSLATIONS[langKey][key] || TRANSLATIONS["english"][key] || ""
+}
+
+/**
+ * Fetch a fresh AI-generated idle roast from the backend.
+ * Falls back to a generic message if the API call fails.
+ */
+export const fetchIdleRoast = async (lang: string): Promise<string> => {
+  try {
+    const res = await fetch(`/api/idle-roast?lang=${encodeURIComponent(lang)}`)
+    if (res.ok) {
+      const data = await res.json()
+      return data.text || "Hello? Your code is rotting while you're gone."
+    }
+  } catch (err) {
+    console.error("Failed to fetch idle roast:", err)
+  }
+  // Fallback if API fails
+  const fallbacks: Record<string, string> = {
+    english: "Ayo, are you alive? Your code is still broken and waiting for you.",
+    hinglish: "Bhai zinda hai? Code abhi bhi toota hua hai idhar.",
+    banglish: "Ki re bhai, benche achis? Code ekhono bhanga pore ache.",
+    bhojpuri: "Babua kahan gailu? Code abhi bhi tootal ba idhar.",
+    marathi: "भाऊ जिवंत आहेस का? कोड अजूनही तुटलेला आहे.",
+    tamil: "தம்பி உயிரோட இருக்கியா? கோட இன்னும் உடைஞ்சி கிடக்கு.",
+    british: "Mate, you still about? Your code is still an absolute shambles.",
+  }
+  return fallbacks[lang] || fallbacks["english"]
 }
 
 export const speak = async (text: string, lang: string = "english", gender: string = "male") => {
@@ -137,6 +157,14 @@ export const speak = async (text: string, lang: string = "english", gender: stri
 
 export const speakKey = (key: string, lang: string, gender: string = "male") => {
   const text = getTranslatedText(key, lang)
+  return speak(text, lang, gender)
+}
+
+/**
+ * Fetch a fresh AI-generated idle message and speak it aloud.
+ */
+export const speakIdle = async (lang: string, gender: string = "male") => {
+  const text = await fetchIdleRoast(lang)
   return speak(text, lang, gender)
 }
 

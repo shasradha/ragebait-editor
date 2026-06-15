@@ -8,7 +8,7 @@ import RoastBanner from "../components/RoastBanner";
 import ScoreBadge from "../components/ScoreBadge";
 import CopyButton from "../components/CopyButton";
 import useAnalyse from "../hooks/useAnalyse";
-import { speak, speakRoast, speakError, setMuted, stopSpeaking, speakKey } from "../lib/speech";
+import { speak, speakRoast, speakError, setMuted, stopSpeaking, speakKey, speakIdle } from "../lib/speech";
 
 const DEFAULT_PYTHON_CODE = `def calculate_grade(score)
   if score >= 90
@@ -57,6 +57,9 @@ export default function Home() {
   const [skullConfetti, setSkullConfetti] = useState<boolean>(false);
   const [goldConfetti, setGoldConfetti] = useState<boolean>(false);
 
+  // Mobile panel toggle
+  const [showMobilePanel, setShowMobilePanel] = useState<boolean>(false);
+
   // References for Caching and Interaction
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null);
@@ -100,17 +103,17 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Idle Timer 5 Minutes
+  // Idle Timer 5 Minutes — now uses AI-generated messages
   const resetIdleTimer = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
-      speakKey("idle", roastLang, voiceGender);
+      speakIdle(roastLang, voiceGender);
     }, 5 * 60 * 1000);
   }, [roastLang, voiceGender]);
 
   useEffect(() => {
     resetIdleTimer();
-    const events = ["mousemove", "keydown", "click", "scroll"];
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     const handleUserActivity = () => resetIdleTimer();
     events.forEach((event) => window.addEventListener(event, handleUserActivity));
     return () => {
@@ -239,6 +242,9 @@ export default function Home() {
       cachedResponseRef.current = result;
       setActiveTab("errors");
 
+      // On mobile, show the panel after analysis
+      setShowMobilePanel(true);
+
       // Score = 0 Egg
       if (result.score === 0) {
         setZeroFlash(true);
@@ -268,10 +274,12 @@ export default function Home() {
   const handleSelectError = (error: ErrorItem) => {
     handleSelectLine(error.line);
     speakError(error.slang_message, roastLang, voiceGender);
+    // On mobile, hide panel to show editor with highlighted line
+    setShowMobilePanel(false);
   };
 
   return (
-    <main className={`h-screen max-h-screen bg-dark-gradient py-4 px-4 md:px-8 max-w-7xl mx-auto flex flex-col gap-4 overflow-hidden w-full transition-colors duration-500 ${
+    <main className={`h-[100dvh] max-h-[100dvh] bg-dark-gradient py-3 px-3 sm:py-4 sm:px-4 md:px-8 max-w-7xl mx-auto flex flex-col gap-2 sm:gap-4 overflow-hidden w-full transition-colors duration-500 ${
       konamiFlash ? "bg-roast-red/35" : zeroFlash ? "bg-[#000000]" : ""
     }`}>
       {/* Konami achievement popup */}
@@ -331,39 +339,65 @@ export default function Home() {
         </div>
       )}
 
-      {/* Top Bar / Header (Exactly 56px height, no-shrink) */}
-      <header className="h-[56px] flex-shrink-0 flex items-center justify-between border-b border-dark-border pb-2">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl select-none animate-float">🔥</span>
-          <div 
-            onClick={handleLogoClick}
-            className={`cursor-pointer select-none ${logoShake ? "animate-shake" : ""}`}
-          >
-            <h1 className="text-xl md:text-2xl font-extrabold text-gradient-fire leading-none">
-              RageBait Editor
-            </h1>
-            <p className="text-[10px] font-mono text-foreground/45 mt-0.5">
-              Gen-Z Code Reviewer. No Cap. 💀
-            </p>
+      {/* Top Bar / Header — Mobile responsive with wrapping */}
+      <header className="flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-dark-border pb-2 gap-2">
+        {/* Logo + title */}
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-xl sm:text-2xl select-none animate-float">🔥</span>
+            <div 
+              onClick={handleLogoClick}
+              className={`cursor-pointer select-none ${logoShake ? "animate-shake" : ""}`}
+            >
+              <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-gradient-fire leading-none">
+                RageBait Editor
+              </h1>
+              <p className="text-[9px] sm:text-[10px] font-mono text-foreground/45 mt-0.5">
+                Gen-Z Code Reviewer. No Cap. 💀
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile-only: Score + Analyse inline */}
+          <div className="flex items-center gap-2 sm:hidden">
+            {analysed && score !== null && <ScoreBadge score={score} />}
+            <button
+              onClick={handleAnalyse}
+              disabled={loading}
+              className="px-3 py-1.5 rounded-xl font-bold text-xs bg-fire-gradient text-white shadow-md shadow-fire-orange/15 disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center gap-1 transition-all duration-150"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>...</span>
+                </>
+              ) : (
+                <>
+                  <span>🔘</span>
+                  <span>Analyse</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Controls row — scrollable on mobile */}
+        <div className="flex items-center gap-1.5 sm:gap-3 w-full sm:w-auto overflow-x-auto scrollbar-hide pb-1 sm:pb-0">
           {/* 3AM Mode Chip */}
           {is3AMMode && (
-            <div className="bg-purple-950/40 border border-purple-500/30 text-purple-300 font-mono text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1.5 animate-pulse select-none">
+            <div className="bg-purple-950/40 border border-purple-500/30 text-purple-300 font-mono text-[10px] px-2 py-1 rounded-full flex items-center gap-1 animate-pulse select-none shrink-0">
               <span>🌙</span>
-              <span>3AM MODE</span>
+              <span>3AM</span>
             </div>
           )}
 
           {/* Roasting Language Dropdown */}
-          <div className="flex items-center gap-1.5 bg-dark-surface/90 border border-dark-border rounded-xl px-2 py-1.5">
+          <div className="flex items-center gap-1 bg-dark-surface/90 border border-dark-border rounded-xl px-1.5 sm:px-2 py-1 sm:py-1.5 shrink-0">
             <span className="text-xs text-foreground/40 font-mono hidden sm:inline">Roast:</span>
             <select
               value={roastLang}
               onChange={(e) => setRoastLang(e.target.value)}
-              className="bg-transparent text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
+              className="bg-transparent text-[11px] sm:text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
             >
               <option value="english" className="bg-[#141414] text-foreground">🇺🇸 English</option>
               <option value="hinglish" className="bg-[#141414] text-foreground">🇮🇳 Hinglish</option>
@@ -376,12 +410,12 @@ export default function Home() {
           </div>
 
           {/* Code Language Dropdown */}
-          <div className="flex items-center gap-1.5 bg-dark-surface/90 border border-dark-border rounded-xl px-2 py-1.5">
+          <div className="flex items-center gap-1 bg-dark-surface/90 border border-dark-border rounded-xl px-1.5 sm:px-2 py-1 sm:py-1.5 shrink-0">
             <span className="text-xs text-foreground/40 font-mono hidden sm:inline">Lang:</span>
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="bg-transparent text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
+              className="bg-transparent text-[11px] sm:text-xs text-foreground/80 font-semibold focus:outline-none cursor-pointer border-none"
             >
               {LANGUAGE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} className="bg-[#141414] text-foreground">
@@ -394,7 +428,7 @@ export default function Home() {
           {/* Mute Button Toggle */}
           <button
             onClick={toggleMute}
-            className="p-2 rounded-xl bg-dark-surface/90 border border-dark-border hover:bg-white/5 transition-all text-xs cursor-pointer select-none text-foreground/70"
+            className="p-1.5 sm:p-2 rounded-xl bg-dark-surface/90 border border-dark-border hover:bg-white/5 transition-all text-xs cursor-pointer select-none text-foreground/70 shrink-0"
             title="Toggle Voice Roasting"
           >
             {isMuted ? "🔇" : "🔊"}
@@ -403,46 +437,50 @@ export default function Home() {
           {/* Gender Toggle Button */}
           <button
             onClick={toggleGender}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border border-dark-border text-xs font-semibold select-none cursor-pointer transition-all duration-300 ${
+            className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold select-none cursor-pointer transition-all duration-300 shrink-0 ${
               voiceGender === "male"
                 ? "bg-blue-900/40 text-blue-400 border-blue-500/30 hover:bg-blue-900/50"
                 : "bg-pink-900/40 text-pink-400 border-pink-500/30 hover:bg-pink-900/50"
             }`}
             title="Switch Voice Gender"
           >
-            {voiceGender === "male" ? "♂ Male" : "♀ Female"}
+            {voiceGender === "male" ? "♂" : "♀"}
+            <span className="hidden sm:inline">{voiceGender === "male" ? "Male" : "Female"}</span>
           </button>
 
-          {analysed && score !== null && <ScoreBadge score={score} />}
+          {/* Desktop-only: Score + Analyse */}
+          <div className="hidden sm:flex items-center gap-3">
+            {analysed && score !== null && <ScoreBadge score={score} />}
 
-          <button
-            onClick={handleAnalyse}
-            disabled={loading}
-            className="px-5 py-2 rounded-xl font-bold text-xs bg-fire-gradient text-white shadow-md shadow-fire-orange/15 hover:shadow-fire-orange/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center gap-1.5 transition-all duration-150"
-          >
-            {loading ? (
-              <>
-                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Roasting...</span>
-              </>
-            ) : (
-              <>
-                <span>🔘</span>
-                <span>Analyse Code</span>
-              </>
-            )}
-          </button>
+            <button
+              onClick={handleAnalyse}
+              disabled={loading}
+              className="px-5 py-2 rounded-xl font-bold text-xs bg-fire-gradient text-white shadow-md shadow-fire-orange/15 hover:shadow-fire-orange/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center gap-1.5 transition-all duration-150"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Roasting...</span>
+                </>
+              ) : (
+                <>
+                  <span>🔘</span>
+                  <span>Analyse Code</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Error alert toast */}
       {errorText && (
-        <div className="p-3 rounded-xl bg-roast-red/10 border border-roast-red/30 text-roast-red text-xs font-semibold flex items-center justify-between gap-3 animate-slide-down flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <span>❌</span>
-            <p>{errorText}</p>
+        <div className="p-2 sm:p-3 rounded-xl bg-roast-red/10 border border-roast-red/30 text-roast-red text-xs font-semibold flex items-center justify-between gap-2 animate-slide-down flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="shrink-0">❌</span>
+            <p className="truncate">{errorText}</p>
           </div>
-          <button onClick={() => setErrorText(null)} className="text-roast-red/70 hover:text-roast-red font-bold text-xs px-2 cursor-pointer select-none">
+          <button onClick={() => setErrorText(null)} className="text-roast-red/70 hover:text-roast-red font-bold text-xs px-2 cursor-pointer select-none shrink-0">
             dismiss
           </button>
         </div>
@@ -451,8 +489,8 @@ export default function Home() {
       {/* Roast Banner (If overall roast present) */}
       <RoastBanner roast={overallRoast} score={score} />
 
-      {/* Editor area (flex-1, takes remaining height, no-overflow) */}
-      <div className="flex-1 min-h-0 relative">
+      {/* Editor area — takes remaining space on desktop, flexible on mobile */}
+      <div className={`flex-1 min-h-0 relative ${showMobilePanel ? "hidden sm:block" : ""}`}>
         <Editor
           value={code}
           onChange={(val) => {
@@ -466,14 +504,24 @@ export default function Home() {
         />
       </div>
 
-      {/* Bottom panel (fixed height 280px, no-overflow, own scroll) */}
-      <section className="h-[280px] min-h-[280px] max-h-[280px] border border-dark-border bg-dark-card/30 rounded-xl overflow-hidden glass flex flex-col flex-shrink-0">
+      {/* Mobile toggle to show/hide bottom panel */}
+      {analysed && (
+        <button
+          onClick={() => setShowMobilePanel(!showMobilePanel)}
+          className="sm:hidden flex items-center justify-center gap-2 py-1.5 text-xs font-mono text-foreground/60 border border-dark-border rounded-lg bg-dark-card/50 cursor-pointer select-none flex-shrink-0"
+        >
+          {showMobilePanel ? "📝 Show Editor" : `🔥 Show Results (${errors.length} errors)`}
+        </button>
+      )}
+
+      {/* Bottom panel — responsive height */}
+      <section className={`${showMobilePanel ? "flex-1 min-h-0" : "hidden sm:flex sm:flex-col"} sm:h-[280px] sm:min-h-[280px] sm:max-h-[280px] border border-dark-border bg-dark-card/30 rounded-xl overflow-hidden glass flex flex-col flex-shrink-0`}>
         {/* Tab bar header */}
-        <div className="flex items-center justify-between border-b border-dark-border px-4 py-2 bg-dark-card/50 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-dark-border px-3 sm:px-4 py-2 bg-dark-card/50 flex-shrink-0">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("errors")}
-              className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-colors cursor-pointer select-none ${
+              className={`px-2.5 sm:px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-colors cursor-pointer select-none ${
                 activeTab === "errors"
                   ? "bg-fire-gradient text-white"
                   : "text-foreground/60 hover:text-foreground hover:bg-white/5"
@@ -485,7 +533,7 @@ export default function Home() {
             <button
               onClick={() => setActiveTab("fixed")}
               disabled={!analysed}
-              className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`px-2.5 sm:px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed ${
                 activeTab === "fixed"
                   ? "bg-fire-gradient text-white"
                   : "text-foreground/60 hover:text-foreground hover:bg-white/5"
@@ -503,8 +551,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* Tab contents (Takes remaining space inside bottom panel, inner scrolls) */}
-        <div className="p-4 bg-dark-card/10 flex-grow min-h-0 overflow-hidden">
+        {/* Tab contents */}
+        <div className="p-3 sm:p-4 bg-dark-card/10 flex-grow min-h-0 overflow-hidden">
           {activeTab === "errors" ? (
             <ErrorPanel
               errors={errors}
@@ -512,7 +560,7 @@ export default function Home() {
               loading={loading}
             />
           ) : (
-            <div className="h-[210px] max-h-[210px] relative overflow-hidden">
+            <div className="h-full sm:h-[210px] sm:max-h-[210px] relative overflow-hidden">
               <Editor value={fixedCode} readOnly={true} language={selectedLanguage} />
             </div>
           )}
@@ -520,7 +568,7 @@ export default function Home() {
       </section>
 
       {/* Tiny Footer */}
-      <footer className="h-6 flex-shrink-0 text-center text-[10px] font-mono text-foreground/20 flex items-center justify-center border-t border-dark-border/40">
+      <footer className="h-5 sm:h-6 flex-shrink-0 text-center text-[9px] sm:text-[10px] font-mono text-foreground/20 flex items-center justify-center border-t border-dark-border/40">
         <p>Built with Next.js + FastAPI + Groq AI + ChromaDB | Vibes & Roast only 💅</p>
       </footer>
     </main>

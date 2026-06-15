@@ -14,6 +14,7 @@ from rag.embedder import get_model
 from routes.analyse import router as analyse_router
 from routes.embed import router as embed_router
 from routes.speak import router as speak_router
+from routes.idle import router as idle_router
 
 # Load .env.local if present, else .env
 if os.path.exists(".env.local"):
@@ -75,6 +76,7 @@ app.add_middleware(
 app.include_router(analyse_router, tags=["analyse"])
 app.include_router(embed_router, tags=["embed"])
 app.include_router(speak_router)
+app.include_router(idle_router, tags=["idle"])
 
 
 @app.get("/")
