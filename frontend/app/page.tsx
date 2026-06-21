@@ -56,6 +56,7 @@ export default function Home() {
   const [zeroFlash, setZeroFlash] = useState<boolean>(false);
   const [skullConfetti, setSkullConfetti] = useState<boolean>(false);
   const [goldConfetti, setGoldConfetti] = useState<boolean>(false);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState<number>(280);
 
   // Mobile panel toggle
   const [showMobilePanel, setShowMobilePanel] = useState<boolean>(false);
@@ -68,6 +69,8 @@ export default function Home() {
   const logoClicksRef = useRef<number[]>([]);
   const konamiIndexRef = useRef<number>(0);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
+  const isResizingRef = useRef<boolean>(false);
 
   const {
     errors,
@@ -278,10 +281,48 @@ export default function Home() {
     setShowMobilePanel(false);
   };
 
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!isResizingRef.current || !mainRef.current || window.innerWidth < 640) return;
+
+      const bounds = mainRef.current.getBoundingClientRect();
+      const nextHeight = bounds.bottom - event.clientY;
+      const maxHeight = Math.max(220, bounds.height - 260);
+      const clampedHeight = Math.min(Math.max(nextHeight, 220), maxHeight);
+
+      setBottomPanelHeight(clampedHeight);
+    };
+
+    const handlePointerUp = () => {
+      if (!isResizingRef.current) return;
+      isResizingRef.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, []);
+
+  const handleResizeStart = () => {
+    if (window.innerWidth < 640) return;
+    isResizingRef.current = true;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+  };
+
   return (
-    <main className={`h-[100dvh] max-h-[100dvh] bg-dark-gradient py-3 px-3 sm:py-4 sm:px-4 md:px-8 max-w-7xl mx-auto flex flex-col gap-2 sm:gap-4 overflow-hidden w-full transition-colors duration-500 ${
+    <main
+      ref={mainRef}
+      className={`h-[100dvh] max-h-[100dvh] bg-dark-gradient py-3 px-3 sm:py-4 sm:px-4 md:px-8 max-w-7xl mx-auto flex flex-col gap-2 sm:gap-4 overflow-hidden w-full transition-colors duration-500 ${
       konamiFlash ? "bg-roast-red/35" : zeroFlash ? "bg-[#000000]" : ""
-    }`}>
+    }`}
+    >
       {/* Konami achievement popup */}
       {showKonamiPopup && (
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center animate-fade-in p-4">
@@ -504,6 +545,21 @@ export default function Home() {
         />
       </div>
 
+      <div className="hidden sm:flex items-center gap-3 px-2 text-[10px] font-mono text-foreground/35 select-none">
+        <button
+          type="button"
+          onPointerDown={handleResizeStart}
+          className="group flex flex-1 items-center gap-3 cursor-row-resize"
+          aria-label="Resize editor and results panels"
+        >
+          <span className="h-px flex-1 bg-dark-border transition-colors group-hover:bg-fire-orange/40" />
+          <span className="rounded-full border border-dark-border bg-dark-card/70 px-2 py-1 tracking-[0.2em] uppercase transition-colors group-hover:border-fire-orange/40 group-hover:text-fire-orange/80">
+            Resize
+          </span>
+          <span className="h-px flex-1 bg-dark-border transition-colors group-hover:bg-fire-orange/40" />
+        </button>
+      </div>
+
       {/* Mobile toggle to show/hide bottom panel */}
       {analysed && (
         <button
@@ -515,7 +571,13 @@ export default function Home() {
       )}
 
       {/* Bottom panel — responsive height */}
-      <section className={`${showMobilePanel ? "flex-1 min-h-0" : "hidden sm:flex sm:flex-col"} sm:h-[280px] sm:min-h-[280px] sm:max-h-[280px] border border-dark-border bg-dark-card/30 rounded-xl overflow-hidden glass flex flex-col flex-shrink-0`}>
+      <section
+        className={`${showMobilePanel ? "flex-1 min-h-0" : "hidden sm:flex sm:flex-col"} border border-dark-border bg-dark-card/30 rounded-xl overflow-hidden glass flex flex-col flex-shrink-0`}
+        style={{
+          height: showMobilePanel ? undefined : `clamp(220px, ${bottomPanelHeight}px, calc(100dvh - 260px))`,
+          minHeight: showMobilePanel ? undefined : "220px",
+        }}
+      >
         {/* Tab bar header */}
         <div className="flex items-center justify-between border-b border-dark-border px-3 sm:px-4 py-2 bg-dark-card/50 flex-shrink-0">
           <div className="flex gap-2">
@@ -567,9 +629,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tiny Footer */}
-      <footer className="h-5 sm:h-6 flex-shrink-0 text-center text-[9px] sm:text-[10px] font-mono text-foreground/20 flex items-center justify-center border-t border-dark-border/40">
-        <p>Built with Next.js + FastAPI + Groq AI + ChromaDB | Vibes & Roast only 💅</p>
+      <footer className="flex-shrink-0 border-t border-dark-border/40 pt-2 text-[10px] sm:text-xs font-mono text-foreground/55">
+        <div className="flex flex-col items-center justify-center gap-1 text-center sm:flex-row sm:gap-4">
+          <a
+            href="https://github.com/Pritishkk"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-fire-orange"
+          >
+            Pritish's Github
+          </a>
+          <a
+            href="https://github.com/shasradha"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-fire-orange"
+          >
+            Shasradha's Github
+          </a>
+        </div>
       </footer>
     </main>
   );
